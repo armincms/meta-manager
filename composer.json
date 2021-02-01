@@ -1,0 +1,30 @@
+{
+    "name": "armincms/meta-manager",
+    "description": "A Laravel Nova tool.",
+    "keywords": [
+        "laravel",
+        "nova"
+    ],
+    "license": "MIT",
+    "require": {
+        "php": ">=7.1.0",
+        "whitecube/nova-flexible-content": "~0.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Armincms\\MetaManager\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Armincms\\MetaManager\\ToolServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
