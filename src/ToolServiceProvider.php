@@ -29,7 +29,7 @@ class ToolServiceProvider extends ServiceProvider
                     )));  
                 });
 
-                $document->meta($tag, $name, $metadata->except(['group', 'order'])->all()); 
+                $document->meta($tag, $name, $metadata->except(['group', 'order'])->filter()->all()); 
             }); 
         }); 
 
