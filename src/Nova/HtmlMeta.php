@@ -31,8 +31,6 @@ class HtmlMeta extends ConfigResource
     					->required()
     					->rules('required')
                         ->help(__('Use `TITLE`, `DESCRIPTION`, `KEYWORDS` to include current page meta.')),
-
-                    $this->orderField($request),
     			])
     			->addLayout(__('Open Graph Meta'), 'og', [
     				Text::make(__('Property'), 'property')
@@ -48,8 +46,6 @@ class HtmlMeta extends ConfigResource
     					->required()
     					->rules('required')
                         ->help(__('Use `TITLE`, `DESCRIPTION`, `KEYWORDS` to include current page meta.')),
-
-                    $this->orderField($request),
     			])
     			->addLayout(__('HTTP Equiv'), 'http-equiv', [
     				Text::make(__('Http-equiv'), 'http-equiv')
@@ -59,8 +55,6 @@ class HtmlMeta extends ConfigResource
     				Text::make(__('Content'), 'content')
     					->required()
     					->rules('required'),
-
-                    $this->orderField($request),
     			])
     			->addLayout(__('Link'), 'link', [ 
     				Text::make(__('Rel'), 'rel')
@@ -83,28 +77,11 @@ class HtmlMeta extends ConfigResource
                     Text::make(__('Href'), 'href')
                         ->required()
                         ->rules('required'),
-
-                    $this->orderField($request),
     			])
     			->button(__('New Meta'))
                 ->collapsed(),
     	];
-    }
-
-    public function orderField($request)
-    {
-        if(! isset($this->order)) {
-            $this->order = 1;
-        }
-
-        $fillUsingCallback = function($flexibleRequest, $model, $attribute) use ($request) {
-            $model->{$attribute} = is_numeric($flexibleRequest->get($attribute)) 
-                            ? $flexibleRequest->get($attribute)
-                            : intval(collect($request->get('_seo_meta_data_'))->max('attributes.order')) + $this->order++; 
-        };
-
-        return Number::make(__('Display Order'), 'order')->fillUsing($fillUsingCallback);
-    }
+    } 
 
     /**
      * Get the available meta datas.
@@ -113,7 +90,7 @@ class HtmlMeta extends ConfigResource
      */
     public static function metaDatas()
     {
-    	return with(collect(static::option('_seo_meta_data_'))->sortBy('order'), function($metaDatas) { 
+    	return with(collect(static::option('_seo_meta_data_')), function($metaDatas) { 
             return $metaDatas->isEmpty() ? static::insertDefaults() : $metaDatas;
         });
     }
@@ -144,20 +121,17 @@ class HtmlMeta extends ConfigResource
         return [
             [
                 "group" => "meta",
-                "name"  => "title",
-                "order" => $order = 0,
+                "name"  => "title", 
                 "content"   => "TITLE",
             ],
             [
                 "group" => "meta",
-                "name"  => "description",
-                "order" => $order++,
+                "name"  => "description", 
                 "content"   => "DESCRIPTION",
             ],
             [
                 "group" => "meta",
-                "name"  => "keywords",
-                "order" => $order++,
+                "name"  => "keywords", 
                 "content"   => "KEYWORDS",
             ]
         ];
