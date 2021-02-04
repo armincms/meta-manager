@@ -32,9 +32,7 @@ class HtmlMeta extends ConfigResource
     					->rules('required')
                         ->help(__('Use `TITLE`, `DESCRIPTION`, `KEYWORDS` to include current page meta.')),
 
-		    		Number::make(__('Display Order'), 'order')
-		    			->required()
-		    			->rules('required'),
+                    $this->orderField($request),
     			])
     			->addLayout(__('Open Graph Meta'), 'og', [
     				Text::make(__('Property'), 'property')
@@ -51,9 +49,7 @@ class HtmlMeta extends ConfigResource
     					->rules('required')
                         ->help(__('Use `TITLE`, `DESCRIPTION`, `KEYWORDS` to include current page meta.')),
 
-		    		Number::make(__('Display Order'), 'order')
-		    			->required()
-		    			->rules('required'),
+                    $this->orderField($request),
     			])
     			->addLayout(__('HTTP Equiv'), 'http-equiv', [
     				Text::make(__('Http-equiv'), 'http-equiv')
@@ -64,39 +60,50 @@ class HtmlMeta extends ConfigResource
     					->required()
     					->rules('required'),
 
-		    		Number::make(__('Display Order'), 'order')
-		    			->required()
-		    			->rules('required'),
+                    $this->orderField($request),
     			])
     			->addLayout(__('Link'), 'link', [ 
     				Text::make(__('Rel'), 'rel')
     					->required()
     					->rules('required'),
 
-    				Text::make(__('Href'), 'href')
-    					->required()
-    					->rules('required'),
-
-		    		Number::make(__('Display Order'), 'order')
-		    			->required()
-		    			->rules('required'),
-
     				Text::make(__('Type'), 'type'), 
-
-    				Text::make(__('Sizes'), 'sizes')
-    					->rules([function($attribute, $value, $fail) {
-    						if(! (is_null($value) || preg_match('/^[0-9]+[xX][0-9]+$/', $value))) {
-    							$fail(__('Sizes should be format of [0-9]x[0-9]'));
-    						}
-    					}]), 
 
     				Text::make(__('Media'), 'media'),
 
+                    Text::make(__('Sizes'), 'sizes')
+                        ->rules([function($attribute, $value, $fail) {
+                            if(! (is_null($value) || preg_match('/^[0-9]+[xX][0-9]+$/', $value))) {
+                                $fail(__('Sizes should be format of [0-9]x[0-9]'));
+                            }
+                        }]), 
+
     				Text::make(__('Hreflang'), 'hreflang'),
+
+                    Text::make(__('Href'), 'href')
+                        ->required()
+                        ->rules('required'),
+
+                    $this->orderField($request),
     			])
     			->button(__('New Meta'))
                 ->collapsed(),
     	];
+    }
+
+    public function orderField($request)
+    {
+        if(! isset($this->order)) {
+            $this->order = 1;
+        }
+
+        $fillUsingCallback = function($flexibleRequest, $model, $attribute) use ($request) {
+            $model->{$attribute} = is_numeric($flexibleRequest->get($attribute)) 
+                            ? $flexibleRequest->get($attribute)
+                            : intval(collect($request->get('_seo_meta_data_'))->max('attributes.order')) + $this->order++; 
+        };
+
+        return Number::make(__('Display Order'), 'order')->fillUsing($fillUsingCallback);
     }
 
     /**
@@ -138,7 +145,7 @@ class HtmlMeta extends ConfigResource
             [
                 "group" => "meta",
                 "name"  => "title",
-                "order" => $order = -time(),
+                "order" => $order = 0,
                 "content"   => "TITLE",
             ],
             [
