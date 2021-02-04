@@ -2,6 +2,7 @@
 
 namespace Armincms\MetaManager\Nova;
 
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Laravel\Nova\Fields\{Text, Number};
 use Whitecube\NovaFlexibleContent\Flexible;
@@ -28,7 +29,8 @@ class HtmlMeta extends ConfigResource
 
     				Text::make(__('Content'), 'content')
     					->required()
-    					->rules('required'),
+    					->rules('required')
+                        ->help(__('Use `TITLE`, `DESCRIPTION`, `KEYWORDS` to include current page meta.')),
 
 		    		Number::make(__('Display Order'), 'order')
 		    			->required()
@@ -37,18 +39,24 @@ class HtmlMeta extends ConfigResource
     			->addLayout(__('Open Graph Meta'), 'og', [
     				Text::make(__('Property'), 'property')
     					->required()
-    					->rules('required'),
+    					->rules('required')
+                        ->fillUsing(function($request, $model, $attribute) {
+                            $property = $request->get($attribute);
+                            
+                            $model->property = Str::startsWith($property, 'og:') ? $property : "og:{$property}"; 
+                        }),
 
     				Text::make(__('Content'), 'content')
     					->required()
-    					->rules('required'),
+    					->rules('required')
+                        ->help(__('Use `TITLE`, `DESCRIPTION`, `KEYWORDS` to include current page meta.')),
 
 		    		Number::make(__('Display Order'), 'order')
 		    			->required()
 		    			->rules('required'),
     			])
-    			->addLayout(__('HTTP Equiv'), 'equiv', [
-    				Text::make(__('Http-equiv'), 'equiv')
+    			->addLayout(__('HTTP Equiv'), 'http-equiv', [
+    				Text::make(__('Http-equiv'), 'http-equiv')
     					->required()
     					->rules('required'),
 
@@ -86,7 +94,8 @@ class HtmlMeta extends ConfigResource
 
     				Text::make(__('Hreflang'), 'hreflang'),
     			])
-    			->button(__('New Meta')),
+    			->button(__('New Meta'))
+                ->collapsed(),
     	];
     }
 
@@ -97,6 +106,53 @@ class HtmlMeta extends ConfigResource
      */
     public static function metaDatas()
     {
-    	return collect(static::option('_seo_meta_data_'))->sortBy('order');
+    	return with(collect(static::option('_seo_meta_data_'))->sortBy('order'), function($metaDatas) { 
+            return $metaDatas->isEmpty() ? static::insertDefaults() : $metaDatas;
+        });
+    }
+
+    /**
+     * Get a fresh instance of the model represented by the resource.
+     *
+     * @return mixed
+     */
+    public static function newModel()
+    {
+        return tap(parent::newModel(), function() {
+            if(static::metaDatas()->isEmpty()) {
+                static::insertDefaults();
+            } 
+        });
+    }
+
+    public static function insertDefaults()
+    {
+        static::store()->put('_seo_meta_data_', static::defaults());
+
+        return static::metaDatas(); 
+    }
+
+    public static function defaults()
+    { 
+        return [
+            [
+                "group" => "meta",
+                "name"  => "title",
+                "order" => $order = -time(),
+                "content"   => "TITLE",
+            ],
+            [
+                "group" => "meta",
+                "name"  => "description",
+                "order" => $order++,
+                "content"   => "DESCRIPTION",
+            ],
+            [
+                "group" => "meta",
+                "name"  => "keywords",
+                "order" => $order++,
+                "content"   => "KEYWORDS",
+            ]
+        ];
     }
 }

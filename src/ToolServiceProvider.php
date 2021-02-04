@@ -1,23 +1,12 @@
 <?php
 
 namespace Armincms\MetaManager;
- 
+  
 use Illuminate\Support\ServiceProvider; 
 use Laravel\Nova\Nova as LaravelNova;
 
 class ToolServiceProvider extends ServiceProvider 
-{     
-    /**
-     * Register any authentication / authorization services.
-     *
-     * @return void
-     */
-    public function boot()
-    {
-        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
-        $this->loadViewsFrom(__DIR__.'/../resources/views', 'meatadata');
-    } 
-
+{      
     /**
      * Register any application services.
      *
@@ -26,7 +15,22 @@ class ToolServiceProvider extends ServiceProvider
     public function register()
     {
         \Event::listen(\Core\Document\Events\Rendering::class, function($event) {
-            $event->document->pushMeta(new Meta($event->document));
+            $document = $event->document;
+
+            Nova\HtmlMeta::metaDatas()->each(function($metadata) use ($document) { 
+                $name = $metadata['name'] ?? $metadata['property'] ?? $metadata['http-equiv'] ?? $metadata['href'];
+                
+                $tag = $metadata['group'] === 'link' ? 'link' : 'meta'; 
+
+                $metadata = collect($metadata)->map(function($value) use ($document) { 
+                    return str_replace('DESCRIPTION', $document->getDescription(), str_replace(
+                        'TITLE', $document->getTitle(), str_replace(
+                            'KEYWORDS', $document->getKeywords(), $value
+                    )));  
+                });
+
+                $document->meta($tag, $name, $metadata->except(['group', 'order'])->all()); 
+            }); 
         }); 
 
         LaravelNova::serving(function() {
