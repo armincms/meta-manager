@@ -111,7 +111,7 @@ class HtmlMeta extends ConfigResource
 
     public static function insertDefaults()
     {
-        static::store()->put('_seo_meta_data_', static::defaults());
+        static::store()->put('_seo_meta_data_', static::defaults(), static::storeTag());
 
         return static::metaDatas(); 
     }
